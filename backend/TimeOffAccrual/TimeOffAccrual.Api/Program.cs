@@ -3,13 +3,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Text.Json.Serialization;
 using TimeOffAccrual.Api.Data;
 using TimeOffAccrual.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Swagger and the frontend send "Full" or "Pending" instead of 0 or 1, and invalid strings are rejected automatically
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
@@ -67,6 +70,7 @@ builder.Services.AddAuthorization();
 // register services for dependency injection
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<CreditService>();
+builder.Services.AddScoped<RequestService>();
 
 var app = builder.Build();
 
