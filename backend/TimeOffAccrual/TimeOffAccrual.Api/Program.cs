@@ -72,7 +72,17 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<CreditService>();
 builder.Services.AddScoped<RequestService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 var app = builder.Build();
+
+
 
 // call seed method to populate the database with initial data
 
@@ -89,6 +99,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("Frontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
