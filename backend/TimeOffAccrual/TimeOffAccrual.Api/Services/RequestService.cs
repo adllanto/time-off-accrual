@@ -91,6 +91,17 @@ public class RequestService
         return new CreateRequestResult(CreateRequestStatus.Success, Request: ToDto(request));
     }
 
+    public async Task<List<RequestDto>> GetForUserAsync(int userId)
+    {
+        var requests = await _db.TimeOffRequests
+            .Include(r => r.User)
+            .Where(r => r.UserId == userId)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+
+        return requests.Select(ToDto).ToList();
+    }
+
     private static CreateRequestResult Fail(CreateRequestStatus status, string message)
         => new(status, message);
 
