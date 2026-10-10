@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -72,6 +73,9 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<CreditService>();
 builder.Services.AddScoped<RequestService>();
 
+builder.Services.AddProblemDetails();
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
@@ -80,7 +84,21 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
+// Login rate limiting
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.AddFixedWindowLimiter("login", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+});
+
+
 var app = builder.Build();
+
 
 
 
@@ -100,7 +118,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseExceptionHandler();
+
 app.UseCors("Frontend");
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using TimeOffAccrual.Api.Data;
 using TimeOffAccrual.Api.Dtos;
@@ -25,6 +26,7 @@ public class AuthController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);

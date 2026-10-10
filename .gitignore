@@ -17,3 +17,5 @@ dist/
 .env
 .vscode/
 .idea/
+
+.env.local
