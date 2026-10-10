@@ -62,4 +62,23 @@ public class CreditService
             AvailableHours = balance.EarnedHours - balance.TakenHours
         });
     }
+
+    public async Task<CreditOverviewDto?> GetForUserAsync(int userId)
+    {
+        var c = await _db.CreditBalances
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(x => x.UserId == userId);
+
+        if (c is null) return null;
+
+        return new CreditOverviewDto
+        {
+            UserId = c.UserId,
+            Name = c.User.Name,
+            Email = c.User.Email,
+            EarnedHours = c.EarnedHours,
+            TakenHours = c.TakenHours,
+            AvailableHours = c.EarnedHours - c.TakenHours
+        };
+    }
 }

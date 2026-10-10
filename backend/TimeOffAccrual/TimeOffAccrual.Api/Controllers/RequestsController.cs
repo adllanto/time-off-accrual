@@ -12,10 +12,12 @@ namespace TimeOffAccrual.Api.Controllers;
 public class RequestsController : ControllerBase
 {
     private readonly RequestService _requests;
+    private readonly CreditService _credits;
 
-    public RequestsController(RequestService requests)
+    public RequestsController(RequestService requests, CreditService credits)
     {
         _requests = requests;
+        _credits = credits;
     }
 
     [HttpPost]
@@ -75,4 +77,12 @@ public class RequestsController : ControllerBase
         DecisionStatus.Conflict => Conflict(new { message = result.Message }),
         _ => StatusCode(StatusCodes.Status500InternalServerError)
     };
+
+    [HttpGet("balance")]
+    [Authorize(Roles = "Agent")]
+    public async Task<ActionResult<CreditOverviewDto>> GetMyBalance()
+    {
+        var balance = await _credits.GetForUserAsync(User.GetUserId());
+        return balance is null ? NotFound(new { message = "No credit balance found." }) : balance;
+    }
 }
