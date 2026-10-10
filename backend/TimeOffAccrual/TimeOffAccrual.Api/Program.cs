@@ -1,9 +1,9 @@
-using Microsoft.EntityFrameworkCore;
-using TimeOffAccrual.Api.Data;
-
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using TimeOffAccrual.Api.Data;
+using TimeOffAccrual.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +39,8 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+// register services for dependency injection
+builder.Services.AddScoped<TokenService>();
 
 var app = builder.Build();
 
