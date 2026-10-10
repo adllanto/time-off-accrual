@@ -1,5 +1,6 @@
 import { useAuth } from "./AuthContext";
 import LoginPage from "./LoginPage";
+import AdminCredits from "./AdminCredits";
 
 export default function App() {
   const { user, logout } = useAuth();
@@ -12,7 +13,12 @@ export default function App() {
         <strong>{user.name} ({user.role})</strong>
         <button onClick={logout}>Log out</button>
       </header>
-      <p>Logged in. Pages for {user.role}s come next.</p>
+
+      {user.role === "Admin" ? (
+        <AdminCredits />
+      ) : (
+        <p>Agent pages come next.</p>
+      )}
     </div>
   );
 }
