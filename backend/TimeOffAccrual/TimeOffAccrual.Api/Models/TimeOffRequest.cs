@@ -18,8 +18,9 @@ public class TimeOffRequest
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? DecidedAt { get; set; }
     public int? DecidedByUserId { get; set; }
+    public User? DecidedByUser { get; set; }
 
     public Guid ConcurrencyToken { get; set; } = Guid.NewGuid();
 
-    public User? DecidedByUser { get; set; }
+    
 }

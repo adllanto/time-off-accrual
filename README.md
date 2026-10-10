@@ -6,7 +6,7 @@ A Time-Off & Accrual module for a Workforce Management system.
 React (Vite) + ASP.NET Core Web API (.NET 8) + EF Core + SQLite
 
 ## How to run
-_TODO_
+dotnet user-secrets set "Jwt:Key" "<32+ character string>
 
 ## Assumptions
 - Requests can span a date range. Full Day counts as 8 hours per calendar day in the range.
