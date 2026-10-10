@@ -9,6 +9,10 @@ public enum CreateRequestStatus { Success, Invalid, InsufficientBalance, Overlap
 
 public record CreateRequestResult(CreateRequestStatus Status, string? Message = null, RequestDto? Request = null);
 
+public enum DecisionStatus { Success, NotFound, NotPending, InsufficientBalance, Conflict }
+
+public record DecisionResult(DecisionStatus Status, string? Message = null, RequestDto? Request = null);
+
 public class RequestService
 {
     private const decimal HoursPerDay = 8m;
@@ -118,4 +122,88 @@ public class RequestService
         CreatedAt = r.CreatedAt,
         DecidedAt = r.DecidedAt
     };
+
+    public async Task<List<RequestDto>> GetByStatusAsync(RequestStatus status)
+    {
+        var requests = await _db.TimeOffRequests
+            .Include(r => r.User)
+            .Where(r => r.Status == status)
+            .ToListAsync();
+
+        // Sort in C# (SQLite can't reliably order DateTime values)
+        return requests.OrderBy(r => r.CreatedAt).Select(ToDto).ToList();
+    }
+
+    public async Task<DecisionResult> ApproveAsync(int requestId, int adminId)
+    {
+        // Transaction: the status change and the balance change succeed or fail together
+        await using var tx = await _db.Database.BeginTransactionAsync();
+
+        var request = await _db.TimeOffRequests
+            .Include(r => r.User)
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (request is null)
+            return new DecisionResult(DecisionStatus.NotFound, "Request not found.");
+
+        if (request.Status != RequestStatus.Pending)
+            return new DecisionResult(DecisionStatus.NotPending, "This request has already been decided.");
+
+        var balance = await _db.CreditBalances.FirstOrDefaultAsync(c => c.UserId == request.UserId);
+        if (balance is null || request.Hours > balance.EarnedHours - balance.TakenHours)
+            return new DecisionResult(DecisionStatus.InsufficientBalance,
+                "The agent no longer has enough available balance for this request.");
+
+        request.Status = RequestStatus.Approved;
+        request.DecidedAt = DateTime.UtcNow;
+        request.DecidedByUserId = adminId;
+        request.ConcurrencyToken = Guid.NewGuid(); // changing it makes a concurrent save fail
+
+        balance.TakenHours += request.Hours;
+
+        try
+        {
+            await _db.SaveChangesAsync();
+            await tx.CommitAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Someone else changed this request at the same time
+            return new DecisionResult(DecisionStatus.Conflict,
+                "This request was changed by someone else. Please refresh.");
+        }
+
+        return new DecisionResult(DecisionStatus.Success, Request: ToDto(request));
+    }
+
+    public async Task<DecisionResult> DenyAsync(int requestId, int adminId)
+    {
+        var request = await _db.TimeOffRequests
+            .Include(r => r.User)
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (request is null)
+            return new DecisionResult(DecisionStatus.NotFound, "Request not found.");
+
+        if (request.Status != RequestStatus.Pending)
+            return new DecisionResult(DecisionStatus.NotPending, "This request has already been decided.");
+
+        request.Status = RequestStatus.Denied;
+        request.DecidedAt = DateTime.UtcNow;
+        request.DecidedByUserId = adminId;
+        request.ConcurrencyToken = Guid.NewGuid();
+        // No balance change on denial
+
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return new DecisionResult(DecisionStatus.Conflict,
+                "This request was changed by someone else. Please refresh.");
+        }
+
+        return new DecisionResult(DecisionStatus.Success, Request: ToDto(request));
+    }
 }
