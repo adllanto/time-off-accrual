@@ -50,6 +50,11 @@ public class AppDbContext : DbContext
             e.HasIndex(r => r.Status);
 
             e.ToTable(t => t.HasCheckConstraint("CK_TimeOffRequest_Dates", "EndDate >= StartDate"));
+
+            e.HasOne(r => r.DecidedByUser)
+                .WithMany()
+                .HasForeignKey(r => r.DecidedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

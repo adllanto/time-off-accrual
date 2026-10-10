@@ -20,4 +20,6 @@ public class TimeOffRequest
     public int? DecidedByUserId { get; set; }
 
     public Guid ConcurrencyToken { get; set; } = Guid.NewGuid();
+
+    public User? DecidedByUser { get; set; }
 }
