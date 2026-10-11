@@ -60,7 +60,51 @@ Stop the API, delete `timeoffaccrual.db` (and any `-shm` or `-wal` files), and s
 - Available balance is calculated as Earned - Taken and is never stored.
 
 ## Schema overview
-_TODO_
+## Schema overview
+
+```mermaid
+erDiagram
+    USER ||--o| CREDIT_BALANCE : "has (agents only)"
+    USER ||--o{ TIME_OFF_REQUEST : files
+    USER ||--o{ TIME_OFF_REQUEST : "decides (admins)"
+
+    USER {
+        int Id PK
+        string Name
+        string Email UK
+        string PasswordHash
+        string Role "Admin or Agent"
+    }
+    CREDIT_BALANCE {
+        int Id PK
+        int UserId FK, UK
+        decimal EarnedHours
+        decimal TakenHours
+    }
+    TIME_OFF_REQUEST {
+        int Id PK
+        int UserId FK
+        date StartDate
+        date EndDate
+        string DurationType "Full or Partial"
+        decimal Hours
+        string Status "Pending, Approved or Denied"
+        datetime CreatedAt
+        datetime DecidedAt
+        int DecidedByUserId FK
+        guid ConcurrencyToken
+    }
+```
+
+### Design notes
+- **Available balance is computed** (`EarnedHours - TakenHours`) and never stored, so it can't drift out of sync.
+- **One balance per agent**, enforced by a unique index on `CreditBalance.UserId`. Admins have no balance.
+- **Enums are stored as text** (`Admin`, `Pending`) so the database is readable.
+- **Check constraint** on requests: `EndDate >= StartDate`.
+- **Indexes:** `(UserId, StartDate, EndDate)` for the overlap query and `Status` for the approval queue.
+- **Concurrency:** a `Guid ConcurrencyToken` changes on every update, so two simultaneous approvals can't both succeed (SQLite has no auto `rowversion`).
+- **SQLite and decimals:** SQLite stores `decimal` as text, so balance comparisons are done in C#, not in SQL or a check constraint.
+- **Deletes are restricted**, so removing a user can't silently delete their history.
 
 ## Tradeoffs and next steps
 _TODO_
