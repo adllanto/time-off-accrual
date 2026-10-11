@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getMyBalance, getMyRequests, createRequest } from "./requestsApi";
+import StatusBadge from "./StatusBadge";
 
 const HOURS_PER_DAY = 8;
 
@@ -71,89 +72,97 @@ export default function AgentRequests() {
          setHours("");
          await load();
       } catch (err) {
-         setError(err.message); // server is the real gate; show its message
+         setError(err.message); // the server is the real gate
       } finally {
          setBusy(false);
       }
    }
 
-   if (loading) return <p>Loading...</p>;
+   if (loading) return <div className="spinner" />;
 
    return (
-      <section>
-         <h2>Request Time Off</h2>
-         <p>
-            Available balance: <strong>{available} hours</strong>{" "}
-            <small>(Earned {balance?.earnedHours}, Taken {balance?.takenHours})</small>
-         </p>
+      <>
+         <div className="stats">
+            <div className="stat" style={{ "--i": 0 }}>
+               <div className="label">Earned</div>
+               <div className="value">{balance?.earnedHours}<small> hrs</small></div>
+            </div>
+            <div className="stat accent" style={{ "--i": 1 }}>
+               <div className="label">Taken</div>
+               <div className="value">{balance?.takenHours}<small> hrs</small></div>
+            </div>
+            <div className="stat good" style={{ "--i": 2 }}>
+               <div className="label">Available</div>
+               <div className="value">{available}<small> hrs</small></div>
+            </div>
+         </div>
 
-         <form onSubmit={handleSubmit} style={{ maxWidth: 360 }}>
-            <label>Type<br />
-               <select value={durationType} onChange={(e) => setDurationType(e.target.value)}>
-                  <option value="Full">Full day (8 hours per day)</option>
-                  <option value="Partial">Partial day</option>
-               </select>
-            </label>
-            <br /><br />
+         <div className="grid-2">
+            <form className="card" onSubmit={handleSubmit}>
+               <div className="card-head"><h2>Request Time Off</h2></div>
 
-            <label>{durationType === "Partial" ? "Date" : "Start date"}<br />
-               <input type="date" min={today} value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)} required />
-            </label>
-            <br /><br />
+               <label className="field">Type
+                  <select value={durationType} onChange={(e) => setDurationType(e.target.value)}>
+                     <option value="Full">Full day (8 hours per day)</option>
+                     <option value="Partial">Partial day</option>
+                  </select>
+               </label>
 
-            {durationType === "Full" && (
-               <>
-                  <label>End date<br />
+               <label className="field">{durationType === "Partial" ? "Date" : "Start date"}
+                  <input type="date" min={today} value={startDate}
+                     onChange={(e) => setStartDate(e.target.value)} required />
+               </label>
+
+               {durationType === "Full" && (
+                  <label className="field">End date
                      <input type="date" min={startDate || today} value={endDate}
                         onChange={(e) => setEndDate(e.target.value)} required />
                   </label>
-                  <br /><br />
-               </>
-            )}
+               )}
 
-            {durationType === "Partial" && (
-               <>
-                  <label>Hours (0.5 to 8)<br />
+               {durationType === "Partial" && (
+                  <label className="field">Hours (0.5 to 8)
                      <input type="number" min="0.5" max="8" step="0.5" value={hours}
                         onChange={(e) => setHours(e.target.value)} required />
                   </label>
-                  <br /><br />
-               </>
-            )}
+               )}
 
-            <p>Requested: <strong>{requestedHours} hours</strong></p>
-            {overBalance && (
-               <p style={{ color: "crimson" }}>This exceeds your available balance.</p>
-            )}
-            {error && <p style={{ color: "crimson" }}>{error}</p>}
-            {success && <p style={{ color: "green" }}>{success}</p>}
+               <p>Requested: <strong>{requestedHours} hours</strong></p>
+               {overBalance && <div className="alert warn">This exceeds your available balance.</div>}
+               {error && <div className="alert error">{error}</div>}
+               {success && <div className="alert success">{success}</div>}
 
-            <button type="submit" disabled={busy || overBalance || requestedHours <= 0}>
-               {busy ? "Submitting..." : "Submit request"}
-            </button>
-         </form>
+               <button className="btn primary block" type="submit"
+                  disabled={busy || overBalance || requestedHours <= 0}>
+                  {busy ? "Submitting..." : "Submit request"}
+               </button>
+            </form>
 
-         <h2 style={{ marginTop: 32 }}>My Requests</h2>
-         {requests.length === 0 ? (
-            <p>No requests yet.</p>
-         ) : (
-            <table border="1" cellPadding="8" style={{ borderCollapse: "collapse" }}>
-               <thead>
-                  <tr><th>Dates</th><th>Type</th><th>Hours</th><th>Status</th></tr>
-               </thead>
-               <tbody>
-                  {requests.map((r) => (
-                     <tr key={r.id}>
-                        <td>{r.startDate === r.endDate ? r.startDate : `${r.startDate} to ${r.endDate}`}</td>
-                        <td>{r.durationType}</td>
-                        <td>{r.hours}</td>
-                        <td>{r.status}</td>
-                     </tr>
-                  ))}
-               </tbody>
-            </table>
-         )}
-      </section>
+            <section className="card">
+               <div className="card-head"><h2>My Requests</h2></div>
+               {requests.length === 0 ? (
+                  <p className="empty">No requests yet.</p>
+               ) : (
+                  <div className="table-wrap">
+                     <table>
+                        <thead>
+                           <tr><th>Dates</th><th>Type</th><th>Hours</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                           {requests.map((r, i) => (
+                              <tr key={r.id} style={{ "--i": i }}>
+                                 <td>{r.startDate === r.endDate ? r.startDate : `${r.startDate} to ${r.endDate}`}</td>
+                                 <td>{r.durationType}</td>
+                                 <td className="num">{r.hours}</td>
+                                 <td><StatusBadge status={r.status} /></td>
+                              </tr>
+                           ))}
+                        </tbody>
+                     </table>
+                  </div>
+               )}
+            </section>
+         </div>
+      </>
    );
 }

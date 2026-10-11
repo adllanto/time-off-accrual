@@ -22,18 +22,23 @@ export default function LoginPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 320, margin: "80px auto" }}>
-      <h1>Time Off Accrual</h1>
-      <label>Email<br />
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      </label>
-      <br /><br />
-      <label>Password<br />
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-      </label>
-      <br /><br />
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
-      <button type="submit" disabled={busy}>{busy ? "Signing in..." : "Sign in"}</button>
-    </form>
+    <div className="login-wrap">
+      <form className="card login-card" onSubmit={handleSubmit}>
+        <div className="brand">TIME OFF</div>
+        <p className="sub">Sign in to manage your time-off credits.</p>
+
+        <label className="field">Email
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </label>
+        <label className="field">Password
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        </label>
+
+        {error && <div className="alert error">{error}</div>}
+        <button className="btn primary block" type="submit" disabled={busy}>
+          {busy ? "Signing in..." : "Sign in"}
+        </button>
+      </form>
+    </div>
   );
 }

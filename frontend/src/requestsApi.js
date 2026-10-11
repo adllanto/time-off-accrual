@@ -4,6 +4,7 @@ import {
 
 export const getMyBalance = () => api("/api/requests/balance");
 export const getMyRequests = () => api("/api/requests/mine");
+export const getRequestsByStatus = (status) => api(`/api/requests?status=${status}`);
 
 export const createRequest = (payload) =>
    api("/api/requests", {
@@ -22,3 +23,5 @@ export const createRequest = (payload) =>
       api(`/api/requests/${id}/deny`, {
          method: "POST"
       });
+
+      
