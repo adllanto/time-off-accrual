@@ -14,7 +14,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
 
@@ -23,7 +22,7 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = SecuritySchemeType.Http, 
+        Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
@@ -69,8 +68,6 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// Part 1: Register services
-// register services for dependency injection
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<CreditService>();
 builder.Services.AddScoped<RequestService>();
@@ -90,6 +87,12 @@ builder.Services.AddCors(options =>
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsync(
+            "{\"message\":\"Too many login attempts. Please wait a minute and try again.\"}", token);
+    };
     o.AddFixedWindowLimiter("login", opt =>
     {
         opt.PermitLimit = 5;
@@ -98,11 +101,7 @@ builder.Services.AddRateLimiter(o =>
     });
 });
 
-
 var app = builder.Build();
-
-
-
 
 // call seed method to populate the database with initial data
 
@@ -112,6 +111,8 @@ using (var scope = app.Services.CreateScope())
     await DbSeeder.SeedAsync(db);
 }
 
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -119,20 +120,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// for hardening
-app.UseExceptionHandler(); // catch errors
-
 app.UseCors("Frontend");
-
-// for hardening
 app.UseRateLimiter();
-
-
 app.UseAuthentication();
 app.UseAuthorization();
-
-
 app.MapControllers();
 
 app.Run();
