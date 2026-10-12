@@ -100,10 +100,9 @@ public class RequestService
         var requests = await _db.TimeOffRequests
             .Include(r => r.User)
             .Where(r => r.UserId == userId)
-            .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
 
-        return requests.Select(ToDto).ToList();
+        return requests.OrderByDescending(r => r.CreatedAt).Select(ToDto).ToList();
     }
 
     private static CreateRequestResult Fail(CreateRequestStatus status, string message)
@@ -130,7 +129,6 @@ public class RequestService
             .Where(r => r.Status == status)
             .ToListAsync();
 
-        // Sort in C# (SQLite can't reliably order DateTime values)
         return requests.OrderBy(r => r.CreatedAt).Select(ToDto).ToList();
     }
 
@@ -157,7 +155,7 @@ public class RequestService
         request.Status = RequestStatus.Approved;
         request.DecidedAt = DateTime.UtcNow;
         request.DecidedByUserId = adminId;
-        request.ConcurrencyToken = Guid.NewGuid(); // changing it makes a concurrent save fail
+        request.ConcurrencyToken = Guid.NewGuid(); // new version stamp, so a concurrent save fails
 
         balance.TakenHours += request.Hours;
 
