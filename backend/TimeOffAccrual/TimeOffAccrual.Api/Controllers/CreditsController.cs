@@ -30,7 +30,7 @@ public class CreditsController : ControllerBase
     [HttpPut("{userId:int}")]
     public async Task<ActionResult<CreditOverviewDto>> UpdateEarned(int userId, UpdateEarnedCreditsDto dto)
     {
-        var result = await _credits.UpdateEarnedAsync(userId, dto.EarnedHours);
+        var result = await _credits.UpdateEarnedAsync(userId, dto.EarnedHours, User.GetUserId());
 
         if (result.Status == UpdateCreditStatus.NotFound)
             return NotFound(new { message = "No credit balance found for that user." });

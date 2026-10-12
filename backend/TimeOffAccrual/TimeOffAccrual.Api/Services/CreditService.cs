@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TimeOffAccrual.Api.Data;
 using TimeOffAccrual.Api.Dtos;
+using TimeOffAccrual.Api.Models;
 
 namespace TimeOffAccrual.Api.Services;
 
@@ -36,7 +37,7 @@ public class CreditService
         }).ToList();
     }
 
-    public async Task<UpdateCreditResult> UpdateEarnedAsync(int userId, decimal earnedHours)
+    public async Task<UpdateCreditResult> UpdateEarnedAsync(int userId, decimal earnedHours, int adminId)
     {
         var balance = await _db.CreditBalances
             .Include(c => c.User)
@@ -45,12 +46,22 @@ public class CreditService
         if (balance is null)
             return new UpdateCreditResult(UpdateCreditStatus.NotFound);
 
-        // Earned can't drop below what was already taken, or Available would go negative
         if (earnedHours < balance.TakenHours)
             return new UpdateCreditResult(UpdateCreditStatus.BelowTaken);
 
-        balance.EarnedHours = earnedHours;
-        await _db.SaveChangesAsync();
+        // Only record a real change
+        if (earnedHours != balance.EarnedHours)
+        {
+            _db.CreditAdjustments.Add(new CreditAdjustment
+            {
+                AgentUserId = userId,
+                AdminUserId = adminId,
+                PreviousEarnedHours = balance.EarnedHours,
+                NewEarnedHours = earnedHours
+            });
+            balance.EarnedHours = earnedHours;
+            await _db.SaveChangesAsync(); // balance change and audit row save together
+        }
 
         return new UpdateCreditResult(UpdateCreditStatus.Success, new CreditOverviewDto
         {
