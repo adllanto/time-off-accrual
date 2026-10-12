@@ -93,6 +93,14 @@ erDiagram
         int DecidedByUserId FK
         guid ConcurrencyToken
     }
+    CREDIT_ADJUSTMENT {
+        int Id PK
+        int AgentUserId FK
+        int AdminUserId FK
+        decimal PreviousEarnedHours
+        decimal NewEarnedHours
+        datetime CreatedAt
+    }
 ```
 
 ### Design notes
@@ -121,7 +129,6 @@ erDiagram
 
 ### Next steps
 - Complete the automated tests and add CI (build and test on every push)
-- Audit trail for credit adjustments (who changed what, and when)
 - Agents can cancel their own pending requests
 - Weekend and holiday calendars
 - Pagination for the tables
