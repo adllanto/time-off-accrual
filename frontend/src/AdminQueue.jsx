@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getRequestsByStatus, approveRequest, denyRequest } from "./requestsApi";
 import StatusBadge from "./StatusBadge";
+import ConfirmDialog from "./ConfirmDialog";
 
 const STATUSES = ["Pending", "Approved", "Denied"];
 
@@ -10,6 +11,7 @@ export default function AdminQueue() {
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState("");
    const [busyId, setBusyId] = useState(null);
+   const [pending, setPending] = useState(null); // { request, action } awaiting confirmation
 
    async function load(which = status) {
       try {
@@ -38,6 +40,12 @@ export default function AdminQueue() {
          await load(); // refresh either way, the list may be stale
          setBusyId(null);
       }
+   }
+
+   async function confirmDecision() {
+      const { request, action } = pending;
+      await decide(request.id, action);
+      setPending(null);
    }
 
    return (
@@ -89,9 +97,9 @@ export default function AdminQueue() {
                               <td>
                                  <div className="actions">
                                     <button className="btn success" disabled={busyId === r.id}
-                                       onClick={() => decide(r.id, "approve")}>Approve</button>
+                                       onClick={() => setPending({ request: r, action: "approve" })}>Approve</button>
                                     <button className="btn danger" disabled={busyId === r.id}
-                                       onClick={() => decide(r.id, "deny")}>Deny</button>
+                                       onClick={() => setPending({ request: r, action: "deny" })}>Deny</button>
                                  </div>
                               </td>
                            )}
@@ -101,6 +109,24 @@ export default function AdminQueue() {
                </table>
             </div>
          )}
+
+         {pending && (
+            <ConfirmDialog
+               title={pending.action === "approve" ? "Approve this request?" : "Deny this request?"}
+               message={
+                  pending.action === "approve"
+                     ? `${pending.request.hours} hours will be added to ${pending.request.userName}'s Taken credits. This cannot be undone.`
+                     : `${pending.request.userName}'s request will be marked Denied. Their balance will not change. This cannot be undone.`
+               }
+               confirmLabel={pending.action === "approve" ? "Approve" : "Deny"}
+               variant={pending.action === "approve" ? "success" : "danger"}
+               busy={busyId === pending.request.id}
+               onConfirm={confirmDecision}
+               onCancel={() => setPending(null)}
+            />
+         )}
+
+         
       </section>
    );
 }

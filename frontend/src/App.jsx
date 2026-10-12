@@ -50,8 +50,6 @@ export default function App() {
           <span className="user-chip">{user.name} · {user.role}</span>
         </div>
 
-        {/* key={current} remounts the page on every switch, which replays the
-            animation and refetches fresh data from the server */}
         <div className="page" key={current}>
           {current === "credits" && <AdminCredits />}
           {current === "approvals" && <AdminQueue />}
