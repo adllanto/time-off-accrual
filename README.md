@@ -60,7 +60,6 @@ Stop the API, delete `timeoffaccrual.db` (and any `-shm` or `-wal` files), and s
 - Available balance is calculated as Earned - Taken and is never stored.
 
 ## Schema overview
-## Schema overview
 
 ```mermaid
 erDiagram
@@ -107,4 +106,24 @@ erDiagram
 - **Deletes are restricted**, so removing a user can't silently delete their history.
 
 ## Tradeoffs and next steps
-_TODO_
+
+### Design tradeoffs
+- **Pending requests do not reserve balance.** The spec deducts credits only on approval. The balance is re-checked at approval time, so an agent can file several pending requests, but approval rejects any that no longer fit. Reserving hours on submit would be stricter but needs extra tracking.
+- **SQLite for zero-setup.** Reviewers can clone and run. The schema lives in migrations and the data in a seeder. A production system would use PostgreSQL or SQL Server.
+- **Balance math in C#.** SQLite stores decimals as text, so comparisons are done in application code rather than SQL or check constraints.
+- **Calendar days only.** Weekends and holidays count as normal days to cater different shifts and schedules.
+- **Dates use UTC.** "Today" is calculated in UTC, which can differ from a user's local date by a few hours.
+- **Tokens in sessionStorage.** Simple, and cleared when the tab closes, but readable by injected scripts. React's default escaping is the mitigation. httpOnly cookies with CSRF protection would be stronger.
+
+### Known limitations
+- The concurrency token protects the request row, not the balance row. Two admins approving two different requests for the same agent at the same instant could both pass the balance check. A token on `CreditBalance` would close this gap.
+- Automated tests are started (an xUnit project with an in-memory database) but not complete. Testing so far was manual, through the UI and Swagger only.
+
+### Next steps
+- Complete the automated tests and add CI (build and test on every push)
+- Audit trail for credit adjustments (who changed what, and when)
+- Agents can cancel their own pending requests
+- Weekend and holiday calendars
+- Pagination for the tables
+- Refresh tokens and httpOnly cookies
+- Login rate limiting and a global error handler
