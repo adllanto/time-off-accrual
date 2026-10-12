@@ -40,4 +40,10 @@ public class CreditsController : ControllerBase
 
         return result.Credit!;
     }
+
+    [HttpGet("adjustments")]
+    public async Task<ActionResult<List<CreditAdjustmentDto>>> GetAdjustments()
+    {
+        return await _credits.GetAdjustmentsAsync();
+    }
 }

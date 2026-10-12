@@ -92,4 +92,23 @@ public class CreditService
             AvailableHours = c.EarnedHours - c.TakenHours
         };
     }
+
+    public async Task<List<CreditAdjustmentDto>> GetAdjustmentsAsync()
+    {
+        var rows = await _db.CreditAdjustments
+            .Include(a => a.AgentUser)
+            .Include(a => a.AdminUser)
+            .ToListAsync();
+
+        // Sorted in C# because SQLite can't reliably order DateTime values
+        return rows.OrderByDescending(a => a.CreatedAt).Select(a => new CreditAdjustmentDto
+        {
+            Id = a.Id,
+            AgentName = a.AgentUser.Name,
+            AdminName = a.AdminUser.Name,
+            PreviousEarnedHours = a.PreviousEarnedHours,
+            NewEarnedHours = a.NewEarnedHours,
+            CreatedAt = a.CreatedAt
+        }).ToList();
+    }
 }
