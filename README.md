@@ -133,4 +133,3 @@ erDiagram
 - Weekend and holiday calendars
 - Pagination for the tables
 - Refresh tokens and httpOnly cookies
-- Login rate limiting and a global error handler
