@@ -17,6 +17,36 @@ namespace TimeOffAccrual.Api.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.31");
 
+            modelBuilder.Entity("TimeOffAccrual.Api.Models.CreditAdjustment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AdminUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AgentUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("NewEarnedHours")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("PreviousEarnedHours")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminUserId");
+
+                    b.HasIndex("AgentUserId");
+
+                    b.ToTable("CreditAdjustments");
+                });
+
             modelBuilder.Entity("TimeOffAccrual.Api.Models.CreditBalance", b =>
                 {
                     b.Property<int>("Id")
@@ -126,6 +156,25 @@ namespace TimeOffAccrual.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("TimeOffAccrual.Api.Models.CreditAdjustment", b =>
+                {
+                    b.HasOne("TimeOffAccrual.Api.Models.User", "AdminUser")
+                        .WithMany()
+                        .HasForeignKey("AdminUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TimeOffAccrual.Api.Models.User", "AgentUser")
+                        .WithMany()
+                        .HasForeignKey("AgentUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AdminUser");
+
+                    b.Navigation("AgentUser");
                 });
 
             modelBuilder.Entity("TimeOffAccrual.Api.Models.CreditBalance", b =>

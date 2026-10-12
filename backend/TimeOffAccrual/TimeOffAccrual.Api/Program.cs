@@ -49,6 +49,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured. See README.");
 
+// tells the app how to validate tokens.
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -68,6 +69,7 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+// Part 1: Register services
 // register services for dependency injection
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<CreditService>();
@@ -75,7 +77,7 @@ builder.Services.AddScoped<RequestService>();
 
 builder.Services.AddProblemDetails();
 
-
+// allows frontend's address to call the API.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
@@ -118,13 +120,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseExceptionHandler();
+// for hardening
+app.UseExceptionHandler(); // catch errors
 
 app.UseCors("Frontend");
+
+// for hardening
 app.UseRateLimiter();
+
 
 app.UseAuthentication();
 app.UseAuthorization();
+
 
 app.MapControllers();
 

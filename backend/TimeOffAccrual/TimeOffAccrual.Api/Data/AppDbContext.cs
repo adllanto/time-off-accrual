@@ -10,7 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<CreditBalance> CreditBalances => Set<CreditBalance>();
     public DbSet<TimeOffRequest> TimeOffRequests => Set<TimeOffRequest>();
-
+    public DbSet<CreditAdjustment> CreditAdjustments => Set<CreditAdjustment>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>(e =>
@@ -25,9 +25,9 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<CreditBalance>(e =>
         {
-            e.Ignore(c => c.AvailableHours);
+            e.Ignore(c => c.AvailableHours); // getter only, no setter, column not created
 
-            e.HasIndex(c => c.UserId).IsUnique();
+            e.HasIndex(c => c.UserId).IsUnique(); // one record per user only
 
             e.HasOne(c => c.User)
                 .WithMany()
@@ -37,7 +37,7 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<TimeOffRequest>(e =>
         {
-            e.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(r => r.Status).HasConversion<string>().HasMaxLength(20); // enums stored as text
             e.Property(r => r.DurationType).HasConversion<string>().HasMaxLength(20);
             e.Property(r => r.ConcurrencyToken).IsConcurrencyToken();
 
@@ -46,8 +46,8 @@ public class AppDbContext : DbContext
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            e.HasIndex(r => new { r.UserId, r.StartDate, r.EndDate });
-            e.HasIndex(r => r.Status);
+            e.HasIndex(r => new { r.UserId, r.StartDate, r.EndDate }); // overlap query
+            e.HasIndex(r => r.Status); // approval queue
 
             e.ToTable(t => t.HasCheckConstraint("CK_TimeOffRequest_Dates", "EndDate >= StartDate"));
 
@@ -55,6 +55,21 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(r => r.DecidedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CreditAdjustment>(e =>
+        {
+            e.HasOne(a => a.AgentUser)
+                .WithMany()
+                .HasForeignKey(a => a.AgentUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(a => a.AdminUser)
+                .WithMany()
+                .HasForeignKey(a => a.AdminUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(a => a.AgentUserId);
         });
     }
 }
