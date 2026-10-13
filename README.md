@@ -99,9 +99,20 @@ erDiagram
         int AdminUserId FK
         decimal PreviousEarnedHours
         decimal NewEarnedHours
-        datetime CreatedAt
+        datetime CreatedAt,
+        guid ConcurrencyToken
     }
 ```
+
+## Architecture
+
+React (Vite) calls an ASP.NET Core Web API, which uses EF Core to store data in SQLite.
+
+- **Controllers** handle HTTP only: they read the user's identity from the JWT, call a service, and map the service's result to a status code.
+- **Services** (`RequestService`, `CreditService`, `TokenService`) hold the business rules: dates, balance, overlap, approval. Controllers depend on interfaces (`IRequestService`, `ICreditService`, `ITokenService`), and dependency injection supplies the implementations. That keeps the layers decoupled and lets a service be replaced with a fake in tests.
+- **DTOs** define what crosses the API boundary, so clients can't over-post fields like `Status` or `TakenHours`, and internal fields like `PasswordHash` never leak.
+- **Data layer:** the schema comes from EF Core migrations and the demo data from a seeder, so the database is rebuilt on startup and the `.db` file is never committed.
+- **Security:** passwords are hashed, login returns a signed JWT, roles are enforced with `[Authorize]` on the server, and the user Id always comes from the token, never from the request.
 
 ### Design notes
 - **Available balance is computed** (`EarnedHours - TakenHours`) and never stored, so it can't drift out of sync.
@@ -109,7 +120,8 @@ erDiagram
 - **Enums are stored as text** (`Admin`, `Pending`) so the database is readable.
 - **Check constraint** on requests: `EndDate >= StartDate`.
 - **Indexes:** `(UserId, StartDate, EndDate)` for the overlap query and `Status` for the approval queue.
-- **Concurrency:** a `Guid ConcurrencyToken` changes on every update, so two simultaneous approvals can't both succeed (SQLite has no auto `rowversion`).
+- **Concurrency:** `TimeOffRequest` and `CreditBalance` each carry a Guid `ConcurrencyToken` that changes on every update, so two simultaneous writers can't both succeed (SQLite has no auto `rowversion`). Approval changes both rows in one transaction, so if either row moved on, the whole save fails with a 409.
+- **Audit trail:** every change to an agent's Earned hours is saved in `CreditAdjustment` (agent, admin, previous value, new value, time). The admin Id comes from the signed token, so it can't be faked. The balance update and the audit row are saved in one `SaveChanges`, so they succeed or fail together. Unchanged values record nothing. History is append-only by design, and there is no update or delete endpoint.
 - **SQLite and decimals:** SQLite stores `decimal` as text, so balance comparisons are done in C#, not in SQL or a check constraint.
 - **Deletes are restricted**, so removing a user can't silently delete their history.
 
@@ -124,7 +136,6 @@ erDiagram
 - **Tokens in sessionStorage.** Simple, and cleared when the tab closes, but readable by injected scripts. React's default escaping is the mitigation. httpOnly cookies with CSRF protection would be stronger.
 
 ### Known limitations
-- The concurrency token protects the request row, not the balance row. Two admins approving two different requests for the same agent at the same instant could both pass the balance check. A token on `CreditBalance` would close this gap.
 - Automated tests are started (an xUnit project with an in-memory database) but not complete. Testing so far was manual, through the UI and Swagger only.
 
 ### Next steps
