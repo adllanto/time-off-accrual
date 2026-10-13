@@ -5,7 +5,7 @@ using TimeOffAccrual.Api.Models;
 
 namespace TimeOffAccrual.Api.Services;
 
-public class RequestService
+public class RequestService : IRequestService
 {
     private const decimal HoursPerDay = 8m;
     private const int MaxDays = 365;

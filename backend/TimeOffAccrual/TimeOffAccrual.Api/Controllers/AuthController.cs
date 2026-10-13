@@ -15,10 +15,10 @@ namespace TimeOffAccrual.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AppDbContext _db;
-    private readonly TokenService _tokens;
     private readonly PasswordHasher<User> _hasher = new();
 
-    public AuthController(AppDbContext db, TokenService tokens)
+    private readonly ITokenService _tokens;
+    public AuthController(AppDbContext db, ITokenService tokens)
     {
         _db = db;
         _tokens = tokens;
@@ -29,7 +29,9 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("login")]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+
+        var email = request.Email.Trim().ToLowerInvariant();
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         // Same generic message for "no such user" and "wrong password"
         if (user is null)

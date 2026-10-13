@@ -7,7 +7,7 @@ using TimeOffAccrual.Api.Models;
 
 namespace TimeOffAccrual.Api.Services;
 
-public class TokenService 
+public class TokenService : ITokenService
 {
     // puts the user's Id, name, and role into the token as claims, signs it with your secret key, and sets an expiry // prevents one agent from impersonating another
 

@@ -5,7 +5,7 @@ using TimeOffAccrual.Api.Models;
 
 namespace TimeOffAccrual.Api.Services;
 
-public class CreditService
+public class CreditService : ICreditService
 {
     private readonly AppDbContext _db;
 

@@ -12,11 +12,11 @@ namespace TimeOffAccrual.Api.Controllers;
 
 public class CreditsController : ControllerBase
 {
-    private readonly CreditService _credits;
+    private readonly ICreditService _credits;
 
 
 
-    public CreditsController(CreditService credits)
+    public CreditsController(ICreditService credits)
     {
         _credits = credits;
     }
@@ -39,7 +39,7 @@ public class CreditsController : ControllerBase
             return BadRequest(new { message = "Earned hours cannot be less than hours already taken." });
 
         if (result.Status == UpdateCreditStatus.Conflict)
-            return Conflict(new { message = "This balance was changed by someone else. Please refresh and try again." });
+    return Conflict(new { message = "This balance was changed by someone else. Please refresh and try again." });
 
         return result.Credit!;
     }

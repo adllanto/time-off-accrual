@@ -11,10 +11,10 @@ namespace TimeOffAccrual.Api.Controllers;
 [Authorize]
 public class RequestsController : ControllerBase
 {
-    private readonly RequestService _requests;
-    private readonly CreditService _credits;
+    private readonly IRequestService _requests;
+    private readonly ICreditService _credits;
 
-    public RequestsController(RequestService requests, CreditService credits)
+    public RequestsController(IRequestService requests, ICreditService credits)
     {
         _requests = requests;
         _credits = credits;
