@@ -12,4 +12,5 @@ public class CreditBalance
 
     // Computed, never stored in the database
     public decimal AvailableHours => EarnedHours - TakenHours;
+    public Guid ConcurrencyToken { get; set; } = Guid.NewGuid();
 }

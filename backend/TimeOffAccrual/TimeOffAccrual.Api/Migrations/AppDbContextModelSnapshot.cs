@@ -53,6 +53,10 @@ namespace TimeOffAccrual.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<Guid>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
                     b.Property<decimal>("EarnedHours")
                         .HasColumnType("TEXT");
 

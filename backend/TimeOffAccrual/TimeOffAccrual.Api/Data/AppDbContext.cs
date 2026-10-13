@@ -26,13 +26,15 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<CreditBalance>(e =>
         {
             e.Ignore(c => c.AvailableHours); // getter only, no setter, column not created
-
             e.HasIndex(c => c.UserId).IsUnique(); // one record per user only
+            e.Property(c => c.ConcurrencyToken).IsConcurrencyToken();
 
             e.HasOne(c => c.User)
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
         });
 
         modelBuilder.Entity<TimeOffRequest>(e =>
