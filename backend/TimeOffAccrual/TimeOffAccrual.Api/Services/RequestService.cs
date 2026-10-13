@@ -5,14 +5,6 @@ using TimeOffAccrual.Api.Models;
 
 namespace TimeOffAccrual.Api.Services;
 
-public enum CreateRequestStatus { Success, Invalid, InsufficientBalance, Overlap, NoBalance }
-
-public record CreateRequestResult(CreateRequestStatus Status, string? Message = null, RequestDto? Request = null);
-
-public enum DecisionStatus { Success, NotFound, NotPending, InsufficientBalance, Conflict }
-
-public record DecisionResult(DecisionStatus Status, string? Message = null, RequestDto? Request = null);
-
 public class RequestService
 {
     private const decimal HoursPerDay = 8m;

@@ -5,10 +5,6 @@ using TimeOffAccrual.Api.Models;
 
 namespace TimeOffAccrual.Api.Services;
 
-public enum UpdateCreditStatus { Success, NotFound, BelowTaken, Conflict }
-
-public record UpdateCreditResult(UpdateCreditStatus Status, CreditOverviewDto? Credit = null);
-
 public class CreditService
 {
     private readonly AppDbContext _db;
