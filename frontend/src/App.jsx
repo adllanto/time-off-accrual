@@ -14,14 +14,21 @@ const NAV = {
   Agent: [{ id: "request", label: "Time Off", icon: "calendar" }],
 };
 
+
+
 export default function App() {
   const { user, logout } = useAuth();
   const [page, setPage] = useState(null);
 
+  function handleLogout() {
+    setPage(null);
+    logout();
+  }
+
   if (!user) return <LoginPage />;
 
   const items = NAV[user.role] ?? [];
-  const current = page ?? items[0]?.id;
+  const current = items.some((i) => i.id === page) ? page : items[0]?.id;
 
   return (
     <div className="shell">
@@ -38,7 +45,7 @@ export default function App() {
           </button>
         ))}
         <div className="sidebar-bottom">
-          <button className="nav-item" onClick={logout}>
+          <button className="nav-item" onClick={handleLogout}>
             <Icon name="logout" />
             Logout
           </button>

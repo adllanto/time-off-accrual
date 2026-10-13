@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { getMyBalance, getMyRequests, createRequest } from "./requestsApi";
 import StatusBadge from "./StatusBadge";
+import { getMyBalance, getMyRequests, createRequest, cancelRequest } from "./requestsApi";
+import ConfirmDialog from "./ConfirmDialog";
 
 const HOURS_PER_DAY = 8;
 
@@ -78,6 +79,25 @@ export default function AgentRequests() {
       }
    }
 
+   const [toCancel, setToCancel] = useState(null);
+   const [cancelling, setCancelling] = useState(false);
+
+   async function confirmCancel() {
+      setCancelling(true);
+      setError("");
+      setSuccess("");
+      try {
+         await cancelRequest(toCancel.id);
+         setSuccess("Request cancelled.");
+      } catch (err) {
+         setError(err.message); // e.g. an admin decided it first
+      } finally {
+         setToCancel(null);
+         setCancelling(false);
+         await load(); // refresh balance and list from the server
+      }
+   }
+
    if (loading) return <div className="spinner" />;
 
    return (
@@ -146,7 +166,13 @@ export default function AgentRequests() {
                   <div className="table-wrap">
                      <table>
                         <thead>
-                           <tr><th>Dates</th><th>Type</th><th>Hours</th><th>Status</th></tr>
+                              <tr>
+                                 <th>Dates</th>
+                                 <th>Type</th>
+                                 <th>Hours</th>
+                                 <th>Status</th>
+                                 <th>Action</th>
+                              </tr>
                         </thead>
                         <tbody>
                            {requests.map((r, i) => (
@@ -155,6 +181,11 @@ export default function AgentRequests() {
                                  <td>{r.durationType}</td>
                                  <td className="num">{r.hours}</td>
                                  <td><StatusBadge status={r.status} /></td>
+                                 <td>
+                                    {r.status === "Pending" && (
+                                       <button className="btn danger" onClick={() => setToCancel(r)}>Cancel</button>
+                                    )}
+                                 </td>
                               </tr>
                            ))}
                         </tbody>
@@ -163,6 +194,18 @@ export default function AgentRequests() {
                )}
             </section>
          </div>
+
+         { toCancel && (
+            <ConfirmDialog
+               title="Cancel this request?"
+               message="This request will be withdrawn and those dates will be free again."
+               confirmLabel="Cancel request"
+               variant="danger"
+               busy={cancelling}
+               onConfirm={confirmCancel}
+               onCancel={() => setToCancel(null)}
+            />
+         )}
       </>
    );
 }

@@ -87,6 +87,34 @@ public class RequestService : IRequestService
         return new CreateRequestResult(CreateRequestStatus.Success, Request: ToDto(request));
     }
 
+    public async Task<DecisionResult> CancelAsync(int requestId, int userId)
+    {
+        var request = await _db.TimeOffRequests
+            .Include(r => r.User)
+            .FirstOrDefaultAsync(r => r.Id == requestId && r.UserId == userId);
+
+        if (request is null)
+            return new DecisionResult(DecisionStatus.NotFound, "Request not found.");
+
+        if (request.Status != RequestStatus.Pending)
+            return new DecisionResult(DecisionStatus.NotPending, "Only pending requests can be cancelled.");
+
+        request.Status = RequestStatus.Cancelled;
+        request.ConcurrencyToken = Guid.NewGuid(); // new version stamp, so a concurrent save fails
+
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return new DecisionResult(DecisionStatus.Conflict,
+                "This request was changed by someone else. Please refresh.");
+        }
+
+        return new DecisionResult(DecisionStatus.Success, Request: ToDto(request));
+    }
+
     public async Task<List<RequestDto>> GetForUserAsync(int userId)
     {
         var requests = await _db.TimeOffRequests

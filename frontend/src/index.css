@@ -292,6 +292,10 @@ tbody tr:hover {
   background: var(--danger);
 }
 
+.badge.cancelled {
+  background: #8a94a6;
+}
+
 /* ---------- Buttons ---------- */
 .btn {
   border: 0;

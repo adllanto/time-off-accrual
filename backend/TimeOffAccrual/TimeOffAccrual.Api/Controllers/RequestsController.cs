@@ -85,4 +85,12 @@ public class RequestsController : ControllerBase
         var balance = await _credits.GetForUserAsync(User.GetUserId());
         return balance is null ? NotFound(new { message = "No credit balance found." }) : balance;
     }
+
+    [HttpPost("{id:int}/cancel")]
+    [Authorize(Roles = "Agent")]
+    public async Task<ActionResult<RequestDto>> Cancel(int id)
+    {
+        var result = await _requests.CancelAsync(id, User.GetUserId());
+        return ToActionResult(result);
+    }
 }

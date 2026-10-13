@@ -10,7 +10,8 @@ public enum RequestStatus
 {
     Pending,
     Approved,
-    Denied
+    Denied,
+    Cancelled
 }
 
 public enum DurationType
