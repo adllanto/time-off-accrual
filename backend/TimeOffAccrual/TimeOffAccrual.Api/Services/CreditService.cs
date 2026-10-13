@@ -5,7 +5,7 @@ using TimeOffAccrual.Api.Models;
 
 namespace TimeOffAccrual.Api.Services;
 
-public enum UpdateCreditStatus { Success, NotFound, BelowTaken }
+public enum UpdateCreditStatus { Success, NotFound, BelowTaken, Conflict }
 
 public record UpdateCreditResult(UpdateCreditStatus Status, CreditOverviewDto? Credit = null);
 
@@ -60,7 +60,16 @@ public class CreditService
                 NewEarnedHours = earnedHours
             });
             balance.EarnedHours = earnedHours;
-            await _db.SaveChangesAsync(); // balance change and audit row save together
+            balance.ConcurrencyToken = Guid.NewGuid(); // new version stamp
+
+            try
+            {
+                await _db.SaveChangesAsync(); // balance change and audit row save together
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return new UpdateCreditResult(UpdateCreditStatus.Conflict);
+            }
         }
 
         return new UpdateCreditResult(UpdateCreditStatus.Success, new CreditOverviewDto

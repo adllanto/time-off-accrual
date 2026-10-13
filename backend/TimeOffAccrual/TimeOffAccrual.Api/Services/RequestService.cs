@@ -158,6 +158,7 @@ public class RequestService
         request.ConcurrencyToken = Guid.NewGuid(); // new version stamp, so a concurrent save fails
 
         balance.TakenHours += request.Hours;
+        balance.ConcurrencyToken = Guid.NewGuid();
 
         try
         {

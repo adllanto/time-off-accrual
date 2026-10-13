@@ -38,6 +38,9 @@ public class CreditsController : ControllerBase
         if (result.Status == UpdateCreditStatus.BelowTaken)
             return BadRequest(new { message = "Earned hours cannot be less than hours already taken." });
 
+        if (result.Status == UpdateCreditStatus.Conflict)
+            return Conflict(new { message = "This balance was changed by someone else. Please refresh and try again." });
+
         return result.Credit!;
     }
 
