@@ -58,6 +58,7 @@ Stop the API, delete `timeoffaccrual.db` (and any `-shm` or `-wal` files), and s
 - Requests with a start date in the past are rejected.
 - Authentication is simplified: the UI sends the selected user's ID, and the API enforces Admin/Agent roles on each endpoint.
 - Available balance is calculated as Earned - Taken and is never stored.
+- Agents can cancel their own Pending requests. Cancelled is an extra status beyond the spec's three, and it frees the dates.
 
 ## Schema overview
 
@@ -87,7 +88,7 @@ erDiagram
         date EndDate
         string DurationType "Full or Partial"
         decimal Hours
-        string Status "Pending, Approved or Denied"
+        string Status "Pending, Approved, Denied or Cancelled"
         datetime CreatedAt
         datetime DecidedAt
         int DecidedByUserId FK
@@ -140,7 +141,6 @@ React (Vite) calls an ASP.NET Core Web API, which uses EF Core to store data in 
 
 ### Next steps
 - Complete the automated tests and add CI (build and test on every push)
-- Agents can cancel their own pending requests
 - Weekend and holiday calendars
 - Pagination for the tables
 - Refresh tokens and httpOnly cookies
