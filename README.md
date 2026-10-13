@@ -56,7 +56,7 @@ Stop the API, delete `timeoffaccrual.db` (and any `-shm` or `-wal` files), and s
 - Weekends and holidays are counted as regular days (simplification).
 - Pending requests do not reserve balance. The balance is re-checked at approval time.
 - Requests with a start date in the past are rejected.
-- Authentication is simplified: the UI sends the selected user's ID, and the API enforces Admin/Agent roles on each endpoint.
+- Authentication uses a login endpoint that returns a signed JWT. The API reads the user's Id and role from the token, never from the request, and enforces Admin/Agent roles on each endpoint.
 - Available balance is calculated as Earned - Taken and is never stored.
 - Agents can cancel their own Pending requests. Cancelled is an extra status beyond the spec's three, and it frees the dates.
 
@@ -67,6 +67,8 @@ erDiagram
     USER ||--o| CREDIT_BALANCE : "has (agents only)"
     USER ||--o{ TIME_OFF_REQUEST : files
     USER ||--o{ TIME_OFF_REQUEST : "decides (admins)"
+    USER ||--o{ CREDIT_ADJUSTMENT : "receives (agent)"
+    USER ||--o{ CREDIT_ADJUSTMENT : "makes (admin)"
 
     USER {
         int Id PK
@@ -80,6 +82,7 @@ erDiagram
         int UserId FK, UK
         decimal EarnedHours
         decimal TakenHours
+        guid ConcurrencyToken
     }
     TIME_OFF_REQUEST {
         int Id PK
@@ -100,8 +103,7 @@ erDiagram
         int AdminUserId FK
         decimal PreviousEarnedHours
         decimal NewEarnedHours
-        datetime CreatedAt,
-        guid ConcurrencyToken
+        datetime CreatedAt
     }
 ```
 
@@ -114,6 +116,7 @@ React (Vite) calls an ASP.NET Core Web API, which uses EF Core to store data in 
 - **DTOs** define what crosses the API boundary, so clients can't over-post fields like `Status` or `TakenHours`, and internal fields like `PasswordHash` never leak.
 - **Data layer:** the schema comes from EF Core migrations and the demo data from a seeder, so the database is rebuilt on startup and the `.db` file is never committed.
 - **Security:** passwords are hashed, login returns a signed JWT, roles are enforced with `[Authorize]` on the server, and the user Id always comes from the token, never from the request.
+- Login is rate limited (5 attempts per minute), and unexpected errors return a clean JSON error with no stack trace.
 
 ### Design notes
 - **Available balance is computed** (`EarnedHours - TakenHours`) and never stored, so it can't drift out of sync.
@@ -138,9 +141,16 @@ React (Vite) calls an ASP.NET Core Web API, which uses EF Core to store data in 
 
 ### Known limitations
 - Automated tests are started (an xUnit project with an in-memory database) but not complete. Testing so far was manual, through the UI and Swagger only.
+- Creating a request has no lock, so two filings at the same instant can both pass the balance and overlap checks. The approval re-check catches any that don't fit.
+- The login rate limiter is shared by all clients rather than partitioned per IP, so one client can lock out others for a minute.
+- Credit adjustment history is available at `GET /api/credits/adjustments` but has no UI.
+- Cancellations record no timestamp, and only Pending requests can be cancelled.
+- Tokens can't be revoked before they expire (60 minutes).
 
 ### Next steps
 - Complete the automated tests and add CI (build and test on every push)
 - Weekend and holiday calendars
 - Pagination for the tables
 - Refresh tokens and httpOnly cookies
+- Cancel approved requests with a balance refund
+- UI for the credit adjustment history
