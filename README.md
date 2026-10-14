@@ -35,7 +35,7 @@ npm run dev
 ```
 Open http://localhost:5173.
 
-The frontend calls the API at `https://localhost:7123` by default. If your API runs on a different port, create `frontend/.env.local` with `VITE_API_URL=<your API address>` and restart `npm run dev`.
+The frontend calls the API at `https://localhost:7196` by default. If your API runs on a different port, create `frontend/.env.local` with `VITE_API_URL=<your API address>` and restart `npm run dev`.
 
 ### Demo accounts (demo only, not for production)
 All accounts use the password `Temp#12345`.
