@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<CreditBalance> CreditBalances => Set<CreditBalance>();
     public DbSet<TimeOffRequest> TimeOffRequests => Set<TimeOffRequest>();
     public DbSet<CreditAdjustment> CreditAdjustments => Set<CreditAdjustment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>(e =>
@@ -33,8 +34,6 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-
         });
 
         modelBuilder.Entity<TimeOffRequest>(e =>

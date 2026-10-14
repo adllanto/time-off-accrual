@@ -1,5 +1,4 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -7,9 +6,10 @@ using TimeOffAccrual.Api.Models;
 
 namespace TimeOffAccrual.Api.Services;
 
+// Builds a signed JWT containing the user's Id, name and role.
 public class TokenService : ITokenService
 {
-    // puts the user's Id, name, and role into the token as claims, signs it with your secret key, and sets an expiry // prevents one agent from impersonating another
+    // puts the user's Id, name, and role into the token as claims, signs it with your secret key, and sets an expiry
 
     private readonly IConfiguration _config;
 
