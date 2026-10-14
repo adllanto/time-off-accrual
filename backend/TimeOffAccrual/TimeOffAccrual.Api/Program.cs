@@ -68,9 +68,9 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddScoped<TokenService>();
-builder.Services.AddScoped<CreditService>();
-builder.Services.AddScoped<RequestService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ICreditService, CreditService>();
+builder.Services.AddScoped<IRequestService, RequestService>();
 
 builder.Services.AddProblemDetails();
 
@@ -91,7 +91,7 @@ builder.Services.AddRateLimiter(o =>
     {
         context.HttpContext.Response.ContentType = "application/json";
         await context.HttpContext.Response.WriteAsync(
-            "{\"message\":\"Too many login attempts. Please wait a minute and try again.\"}", token);
+            "{\"message\":\"Too many login attempts. Please try again later.\"}", token);
     };
     o.AddFixedWindowLimiter("login", opt =>
     {
