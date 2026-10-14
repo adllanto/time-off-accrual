@@ -34,16 +34,18 @@ export default function App() {
     <div className="shell">
       <aside className="sidebar">
         <div className="brand">TIME OFF</div>
-        {items.map((item) => (
-          <button
-            key={item.id}
-            className={`nav-item ${current === item.id ? "active" : ""}`}
-            onClick={() => setPage(item.id)}
-          >
-            <Icon name={item.icon} />
-            {item.label}
-          </button>
-        ))}
+          {
+            items.map((item) => (
+              <button
+                key={item.id}
+                className={`nav-item ${current === item.id ? "active" : ""}`}
+                onClick={() => setPage(item.id)}
+              >
+                <Icon name={item.icon} />
+                {item.label}
+              </button>
+            ))
+          }
         <div className="sidebar-bottom">
           <button className="nav-item" onClick={handleLogout}>
             <Icon name="logout" />

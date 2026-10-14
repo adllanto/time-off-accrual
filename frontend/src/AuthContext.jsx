@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
-import { api } from "./api";
+import { api, setUnauthorizedHandler } from "./api";
+import { useEffect } from "react";
 
 const AuthContext = createContext(null);
 
@@ -22,8 +23,14 @@ export function AuthProvider({ children }) {
 
   function logout() {
     sessionStorage.clear();
-    setUser(null);
+    setUser(null);''
   }
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      logout();
+    });
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
